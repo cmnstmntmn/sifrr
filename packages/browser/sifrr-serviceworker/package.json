@@ -72,7 +72,8 @@
     "rollup-plugin-node-resolve": "^4.0.0",
     "rollup-plugin-terser": "^4.0.4",
     "semantic-release": "^15.13.3",
-    "sinon": "^7.2.4"
+    "sinon": "^7.2.4",
+    "spdy": "^4.0.0"
   },
   "files": [
     "bin",

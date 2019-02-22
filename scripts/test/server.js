@@ -1,4 +1,5 @@
 const express = require('express'),
+  http2 = require('http2'),
   compression = require('compression'),
   serveStatic = require('serve-static'),
   staticTransform = require('connect-static-transform'),
@@ -61,7 +62,20 @@ const sss = function(port, dirS = dir) {
     server.get('/**', (req, res) => res.sendFile(path.join(dirS, './index.html')));
   }
 
-  return server.listen(port, () => global.console.log(`Listening on port ${port} and directories`, dirS));
+  const cert = fs.readFileSync(path.join(__dirname, './keys/server.crt'));
+  const key = fs.readFileSync(path.join(__dirname, './keys/server.key'));
+
+  const options = {
+    cert,
+    key,
+    spdy: {
+      protocols: [ 'h2', 'spdy/3.1', 'http/1.1' ]
+    }
+  };
+  return http2.createSecureServer(
+    options,
+    server
+  ).listen(port, () => global.console.log(`Listening on port ${port} and directories`, dirS));
 };
 
 // listen on port if port given
