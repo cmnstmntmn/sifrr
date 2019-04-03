@@ -8,6 +8,10 @@ class Benchmark {
     this.start = await page.evaluate(`window.from - 1`);
   }
 
+  static waitFor() {
+    return page.waitForFunction(`window.getComputedStyle(document.querySelector('#main').shadowRoot.querySelector('#run')).getPropertyValue('background-color') === "rgb(51, 122, 183)"`);
+  }
+
   static beforeAll() { return Promise.resolve(true); }
 
   before() { return Promise.resolve(true); }

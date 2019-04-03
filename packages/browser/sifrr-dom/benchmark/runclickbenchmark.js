@@ -18,11 +18,12 @@ module.exports = async function(benchmark, port, runs = 5, url, warmups = runs, 
   for (let i = 0; i < times; i++) {
     if (i % (warmups + 1) === 0) {
       // if (url!== page.url()) await page.goto(url);
-      await page.goto(url);
+      await page.goto(url, { waitUntil: 'networkidle0' });
       await BM.setup();
 
       // Run before all
       BM.beforeAll();
+      await BM.waitFor();
       await page.waitForFunction(BM.beforeAllWait());
     }
     const bm = new BM(i % (warmups + 1));
