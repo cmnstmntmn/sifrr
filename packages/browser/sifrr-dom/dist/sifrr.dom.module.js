@@ -87,24 +87,6 @@ var updateattribute = (element, name, newValue) => {
   }
 };
 
-const Json = {
-  shallowEqual: (a, b) => {
-    for(const key in a) {
-      if(!(key in b) || a[key] !== b[key]) {
-        return false;
-      }
-    }
-    for(const key in b) {
-      if(!(key in a) || a[key] !== b[key]) {
-        return false;
-      }
-    }
-    return true;
-  }
-};
-var json = Json;
-
-const { shallowEqual } = json;
 const { TEXT_NODE: TEXT_NODE$1, COMMENT_NODE } = constants;
 function makeChildrenEqual(parent, newChildren, createFn, isNode = false) {
   const newL = newChildren.length, oldL = parent.childNodes.length;
@@ -142,7 +124,7 @@ function makeChildrenEqual(parent, newChildren, createFn, isNode = false) {
 }
 function makeEqual(oldNode, newNode) {
   if (!newNode.nodeType) {
-    if (!shallowEqual(oldNode._state, newNode)) oldNode.state = newNode;
+    oldNode.state = newNode;
     return oldNode;
   }
   if (oldNode.nodeName !== newNode.nodeName) {
@@ -403,13 +385,13 @@ const { makeChildrenEqual: makeChildrenEqual$1 } = makeequal;
 const { makeChildrenEqualKeyed: makeChildrenEqualKeyed$1 } = keyed;
 const { evaluateBindings } = bindings;
 const { TEMPLATE: TEMPLATE$1, KEY_ATTR } = constants;
-function update(element, stateMap) {
+function update(element, stateMap, changed = Object.keys(element._state || {})) {
   stateMap = stateMap || element.constructor.stateMap;
   const l = element._refs ? element._refs.length : 0;
   for (let i = 0; i < l; i++) {
     const data = stateMap[i].ref, dom = element._refs[i];
     if (data.type === 0) {
-      if (dom.data != element._state[data.text]) dom.data = element._state[data.text];
+      if (changed.indexOf(data.text) > -1 && dom.data != element._state[data.text]) dom.data = element._state[data.text];
       continue;
     } else if (data.type === 1) {
       const newValue = evaluateBindings(data.text, element);
@@ -490,8 +472,12 @@ function SimpleElement(content, defaultState = null) {
   const stateProps = {
     get: function() { return this._state; },
     set: function(v) {
-      Object.assign(this._state, v);
-      update_1(this, stateMap);
+      const changed = [];
+      for (let p in v) {
+        if (this._state[p] !== v[p]) changed.push(p);
+      }
+      if (this._state !== v) Object.assign(this._state, v);
+      update_1(this, stateMap, changed);
     }
   };
   content.sifrrClone = function(newState) {
@@ -785,14 +771,18 @@ function elementClassFactory(baseClass) {
       return this._state;
     }
     set state(v) {
+      const changed = [];
+      for (let p in v) {
+        if (this._state[p] !== v[p]) changed.push(p);
+      }
       if (this._state !== v) Object.assign(this._state, v);
-      this.update();
+      this.update(changed);
       this.onStateChange();
     }
     onStateChange() {}
-    update() {
+    update(changed) {
       this.beforeUpdate();
-      update_1(this);
+      update_1(this, undefined, changed);
       trigger(this, 'update', { detail: { state: this.state } });
       this.onUpdate();
     }
@@ -808,8 +798,9 @@ function elementClassFactory(baseClass) {
       return clone;
     }
     clearState() {
+      const changed = Object.keys(this._state);
       this._state = {};
-      this.update();
+      this.update(changed);
     }
     $(args, sr = true) {
       if (this.shadowRoot && sr) return this.shadowRoot.querySelector(args);

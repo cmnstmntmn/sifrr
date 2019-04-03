@@ -91,16 +91,20 @@ function elementClassFactory(baseClass) {
     }
 
     set state(v) {
+      const changed = [];
+      for (let p in v) {
+        if (this._state[p] !== v[p]) changed.push(p);
+      }
       if (this._state !== v) Object.assign(this._state, v);
-      this.update();
+      this.update(changed);
       this.onStateChange();
     }
 
     onStateChange() {}
 
-    update() {
+    update(changed) {
       this.beforeUpdate();
-      update(this);
+      update(this, undefined, changed);
       trigger(this, 'update', { detail: { state: this.state } });
       this.onUpdate();
     }
@@ -120,8 +124,9 @@ function elementClassFactory(baseClass) {
     }
 
     clearState() {
+      const changed = Object.keys(this._state);
       this._state = {};
-      this.update();
+      this.update(changed);
     }
 
     $(args, sr = true) {

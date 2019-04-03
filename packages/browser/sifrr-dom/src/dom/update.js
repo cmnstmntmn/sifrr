@@ -4,7 +4,8 @@ const updateAttribute = require('./updateattribute');
 const { evaluateBindings } = require('./bindings');
 const { TEMPLATE, KEY_ATTR } = require('./constants');
 
-function update(element, stateMap) {
+function update(element, stateMap, changed = Object.keys(element._state || {})) {
+  // console.log(changed);
   stateMap = stateMap || element.constructor.stateMap;
   // Update nodes
   const l = element._refs ? element._refs.length : 0;
@@ -14,7 +15,8 @@ function update(element, stateMap) {
     // Fast path for text nodes
     if (data.type === 0) {
       // state node
-      if (dom.data != element._state[data.text]) dom.data = element._state[data.text];
+      if (changed.indexOf(data.text) > -1 && dom.data != element._state[data.text]) dom.data = element._state[data.text];
+      // if (dom.data != element._state[data.text]) dom.data = element._state[data.text];
       continue;
     } else if (data.type === 1) {
       // text node
